@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, Calendar, Star, DollarSign, Award, Clock, ArrowRight, ShieldAlert, Sparkles, Filter, X } from 'lucide-react';
@@ -15,21 +15,20 @@ import { Badge } from '@/components/ui/badge';
 import { LoadingSpinner } from '@/components/shared/loading-spinner';
 import { Doctor } from '@/types';
 
-export default function DoctorDirectoryPage() {
+// ✅ Moved into a separate component so useSearchParams can be wrapped in Suspense
+function DoctorDirectoryContent() {
   const searchParams = useSearchParams();
   const initialSpecialty = searchParams.get('specialty') || 'All';
 
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [loading, setLoading] = useState(true);
   
-  // Filter States
   const [specialty, setSpecialty] = useState(initialSpecialty);
   const [searchQuery, setSearchQuery] = useState('');
   const [availableOnly, setAvailableOnly] = useState(false);
   const [maxFee, setMaxFee] = useState<number[]>([2000]);
   const [minExperience, setMinExperience] = useState<number[]>([5]);
 
-  // Appointment Dialog States
   const [selectedDoctor, setSelectedDoctor] = useState<Doctor | null>(null);
   const [isBookingOpen, setIsBookingOpen] = useState(false);
   const [bookingDate, setBookingDate] = useState('');
@@ -77,7 +76,6 @@ export default function DoctorDirectoryPage() {
   return (
     <div className="container mx-auto px-4 py-8 max-w-7xl">
       
-      {/* Header */}
       <div className="text-center max-w-2xl mx-auto mb-10">
         <h1 className="text-3xl font-extrabold tracking-tight">Specialist Doctor Directory</h1>
         <p className="mt-2 text-muted-foreground text-sm">
@@ -87,7 +85,6 @@ export default function DoctorDirectoryPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
         
-        {/* Left column - Filter Sidebar */}
         <Card className="lg:col-span-1 shadow-lg border-border/40 h-fit">
           <CardHeader className="border-b border-border/40 pb-4">
             <CardTitle className="text-base font-bold flex items-center gap-1.5">
@@ -98,7 +95,6 @@ export default function DoctorDirectoryPage() {
           </CardHeader>
           <CardContent className="p-4 space-y-5">
             
-            {/* Search Input */}
             <div className="space-y-1.5">
               <span className="text-[10px] font-bold text-muted-foreground uppercase">Search</span>
               <div className="relative">
@@ -112,7 +108,6 @@ export default function DoctorDirectoryPage() {
               </div>
             </div>
 
-            {/* Specialty */}
             <div className="space-y-1.5">
               <span className="text-[10px] font-bold text-muted-foreground uppercase">Specialty</span>
               <Select value={specialty} onValueChange={(val) => setSpecialty(val || 'All')}>
@@ -137,7 +132,6 @@ export default function DoctorDirectoryPage() {
               </Select>
             </div>
 
-            {/* Fee range */}
             <div className="space-y-1.5">
               <div className="flex justify-between text-[10px] font-bold text-muted-foreground uppercase">
                 <span>Max Fee</span>
@@ -153,7 +147,6 @@ export default function DoctorDirectoryPage() {
               />
             </div>
 
-            {/* Min Experience */}
             <div className="space-y-1.5">
               <div className="flex justify-between text-[10px] font-bold text-muted-foreground uppercase">
                 <span>Min Experience</span>
@@ -169,7 +162,6 @@ export default function DoctorDirectoryPage() {
               />
             </div>
 
-            {/* Available Only */}
             <div className="flex items-center justify-between pt-2">
               <span className="text-xs font-semibold text-muted-foreground">Show Available Today</span>
               <Switch checked={availableOnly} onCheckedChange={setAvailableOnly} />
@@ -178,7 +170,6 @@ export default function DoctorDirectoryPage() {
           </CardContent>
         </Card>
 
-        {/* Right column - Doctor Grid */}
         <div className="lg:col-span-3 flex flex-col gap-4">
           
           {loading ? (
@@ -209,8 +200,6 @@ export default function DoctorDirectoryPage() {
                               {doctor.specialty}
                             </CardDescription>
                           </div>
-                          
-                          {/* Availability status badge */}
                           <Badge variant={doctor.availabilityStatus === 'available' ? 'secondary' : 'outline'} className={`text-[9px] font-bold px-2 py-0.5 rounded-full ${
                             doctor.availabilityStatus === 'available'
                               ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20'
@@ -221,8 +210,6 @@ export default function DoctorDirectoryPage() {
                         </div>
                       </CardHeader>
                       <CardContent className="py-4 space-y-3 flex-grow text-xs text-muted-foreground leading-relaxed">
-                        
-                        {/* Doctor info fields */}
                         <div className="grid grid-cols-2 gap-2">
                           <div className="flex items-center gap-1.5">
                             <Award className="h-4 w-4 text-teal-600 dark:text-teal-400 shrink-0" />
@@ -233,22 +220,18 @@ export default function DoctorDirectoryPage() {
                             <span className="font-bold text-foreground">₹{doctor.consultationFee} Fee</span>
                           </div>
                         </div>
-
                         <div>
                           <span className="font-bold text-[10px] text-muted-foreground uppercase block mb-0.5">Qualification</span>
                           <p className="text-foreground font-medium">{doctor.qualification}</p>
                         </div>
-
                         <div>
                           <span className="font-bold text-[10px] text-muted-foreground uppercase block mb-0.5">Clinic Location</span>
                           <p className="text-foreground font-medium">{doctor.clinicName}, {doctor.clinicAddress}, {doctor.clinicCity}</p>
                         </div>
-
                         <div>
                           <span className="font-bold text-[10px] text-muted-foreground uppercase block mb-0.5">About Doctor</span>
                           <p className="line-clamp-2">{doctor.about}</p>
                         </div>
-
                       </CardContent>
                       <CardFooter className="pt-3 border-t border-border/20 bg-muted/10">
                         <Button 
@@ -265,12 +248,9 @@ export default function DoctorDirectoryPage() {
               </AnimatePresence>
             </div>
           )}
-
         </div>
-
       </div>
 
-      {/* Appointment Booking Dialog */}
       <Dialog open={isBookingOpen} onOpenChange={setIsBookingOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
@@ -335,31 +315,3 @@ export default function DoctorDirectoryPage() {
               <Button 
                 onClick={() => setIsBookingOpen(false)}
                 className="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold"
-              >
-                Close Dialog
-              </Button>
-            ) : (
-              <div className="flex gap-2 w-full">
-                <Button 
-                  variant="outline" 
-                  onClick={() => setIsBookingOpen(false)}
-                  className="flex-1 font-bold border-border/50"
-                >
-                  Cancel
-                </Button>
-                <Button 
-                  onClick={submitBooking}
-                  disabled={!bookingDate || !bookingTime}
-                  className="flex-1 bg-teal-600 hover:bg-teal-700 text-white font-bold"
-                >
-                  Confirm Booking
-                </Button>
-              </div>
-            )}
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-    </div>
-  );
-}
